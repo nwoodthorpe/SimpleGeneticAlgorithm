@@ -9,68 +9,40 @@
 # Fitness - A numeric score that grades phenotypes and allows them to be compared
 # Fitness function - A function that assigns a phenotypes a Fitness score
 
-require 'byebug';
-SEED_LEN = 20
-SEED_MIN = 0b00000000000000000000
-SEED_MAX = 0b00000000001111111111
+require 'byebug'
+require_relative 'phenotype.rb'
 TARGET   = 0b11111111111111111111
 
-# Generate 10 phenotypes
 def seed
-  array = []
-  10.times do
-    array << rand(SEED_MIN..SEED_MAX)
+  10.times.map do
+    Phenotype.random_new
   end
-
-  array
-end
-
-def mutate(phenotype)
-  random_index = rand(0..SEED_LEN-1)
-
-  binary = phenotype.to_s(2).rjust(20, '0')
-  binary[random_index] = binary[random_index] == "0" ? "1" : "0"
-
-  binary.to_i(2)
-end
-
-# Worlds simplest fitness function, just returns the number the phenotype evals to
-def fitness(phenotype)
-  phenotype
 end
 
 def winners(generation)
-  sort_by_fitness(generation)[0..4]
-end
-
-def sort_by_fitness(generation)
-  generation.sort do |a, b|
-    fitness(b).to_i <=> fitness(a).to_i
-  end
+  generation.sort.first(5)
 end
 
 def fittest(generation)
-  sort_by_fitness(generation).first
+  generation.sort.first
 end
 
 def run
   generation_count = 1
   generation = seed
 
-  while fittest(generation) != TARGET
-    puts "Fittest: #{fittest(generation)}"
+  while fittest(generation).value != TARGET
+    puts "Generation #{generation_count} fittest: #{fittest(generation).value}"
 
     gen_winners = winners(generation)
-    new_gen = gen_winners.map do |winner|
-      mutate(winner)
-    end
+    gen_winners += gen_winners.map(&:mutate)
+    generation = gen_winners
 
-    generation = [gen_winners, new_gen].flatten
     generation_count += 1
   end
 
   puts "Done!"
-  puts "Generation: #{generation}"
+  puts "Generation: #{generation.map(&:value)}"
   puts "Gen: #{generation_count}"
 end
 
